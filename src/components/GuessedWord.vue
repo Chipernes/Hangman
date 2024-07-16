@@ -1,9 +1,16 @@
+<script setup lang="ts">
+type Props = {
+  word: String,
+  correctLetters: string[]
+}
+
+defineProps<Props>()
+</script>
+
 <template>
   <div class="word">
-    <span class="letter">k</span>
-    <span class="letter"></span>
-    <span class="letter">d</span>
-    <span class="letter"></span>
-    <span class="letter"></span>
+    <span v-for="(letter, index) in word" :key="index" class="letter">
+      {{ correctLetters.includes(letter) ? letter : '' }}
+    </span>
   </div>
 </template>
