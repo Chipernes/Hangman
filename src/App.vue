@@ -6,29 +6,20 @@ import WrongLetters from "@/components/WrongLetters.vue";
 import GuessedWord from "@/components/GuessedWord.vue";
 import ResultingPopup from "@/components/ResultingPopup.vue";
 import InfoNotification from "@/components/InfoNotification.vue";
-import {computed, ref, watch} from "vue";
-import axios from "axios";
+import {ref, watch} from "vue";
+import {useRandomWord} from "@/composables/useRandomWord";
+import {useLetters} from "@/composables/useLetters";
+import {useNotification} from "@/composables/useNotification";
 
-const word = ref('');
-const getRandomWord = async () => {
-  try {
-    const {data} = await axios.get<string[]>('https://random-word-api.herokuapp.com/word');
-    word.value = data[0].toLowerCase();
-  } catch (err) {
-    console.log(err);
-    word.value = '';
-  }
-}
-
-getRandomWord();
-
-const letters = ref<string[]>([]);
-const correctLetters = computed(() => letters.value.filter(x => word.value.includes(x)));
-const incorrectLetters = computed(() => letters.value.filter(x => !word.value.includes(x)));
-const isLose = computed(() => incorrectLetters.value.length === 6);
-const isWin = computed(() => [...word.value].every(x => correctLetters.value.includes(x)));
-const notification = ref<InstanceType<typeof InfoNotification> | null>(null);
+const { word, getRandomWord } = useRandomWord();
+const { letters, correctLetters, incorrectLetters, isLose, isWin, addLetter, resetLetters } = useLetters(word);
+const { notification, showNotification } = useNotification();
 const popup = ref<InstanceType<typeof ResultingPopup> | null>(null);
+const restart = async () => {
+  await getRandomWord();
+  resetLetters();
+  popup.value?.close();
+};
 
 watch(incorrectLetters, () => {
   if (isLose.value) {
@@ -48,21 +39,11 @@ window.addEventListener('keydown', ({key}) => {
   }
 
   if (letters.value.includes(key)) {
-    notification.value?.open();
-    setTimeout(() => notification.value?.close(), 2000);
-    return;
+    showNotification();
   }
 
-  if (/[a-zA-Z]/.test(key)) {
-    letters.value.push(key.toLowerCase());
-  }
+  addLetter(key);
 });
-
-const restart = async () => {
-  await getRandomWord();
-  letters.value = [];
-  popup.value?.close();
-};
 </script>
 
 <template>
